@@ -1,0 +1,44 @@
+###########################################################
+Projekt: 	HTTP Server
+Autor: 		Jakub Pastuszek - xpastu00
+Škola:		VUT FIT
+Pøedmìt:	IPK 2014/2015
+Datum:		duben 2015
+
+Popis: Projekt implementuje HTTP server a klient, který volitelnì využívá Chunked transfer encoding. Server zpøístupòuje obsah v adresáøi 
+./www se základní podporou Content-Type: text/plain. 
+
+Server ukládá veškerou komunikaci s klientem (jakýmkoliv klientem i web browserem) do dvou logovacích souborù. Jeden soubor obsahuje 
+pøíchozí zprávu a druhý odchozí. Oba názvy logovacích souborù obsahují èasovou znaèku spuštìní programu. Server pøijímá nepovinné 
+pøepínaèe -h, -p, -c, -t, kde -h zobrazí nápovìdu, -p nastaví port serveru, -c zapne chunk-ování odpovìdi a nastaví velikost chunku a 
+-t nastaví zpoždìní mezi odesíláním jednotlivých chunkù. Server pøíjme hlavièku s požadavkem, kterou zpracuje a následnì obslouží. 
+Poté vyhledá požadovaný soubor na disku a naète si ho do pamìti. Po naètení vytvoøí hlavièku odpovìdi pro klienta, za kterou budou 
+následovat požadovaná data (raw data ze souboru). Pokud server nepodporuje chunky, tak se hlavièka a data posílají v jedné zprávì 
+najednou. Pokud server chunky podporuje tak spoleènì s hlavièkou se pošle i první chunk a poté další chunky. Server podporuje 
+následující HTTP stavové kody: 404 - "Not Found", 403 - "Forbidden" a 200 - "OK".
+
+Klient ukládá veškerou komunikaci se serverem do ètyøech logovacích souborù. Jeden soubor obsahuje pøíchozí zprávu, druhý odchozí, další 
+pøijatou hlavièku a poslední užiteèný obsah zprávy. Všechny názvy logovacích souborù obsahují èasovou znaèku spuštìní programu. Klient 
+pøijímá jeden nepovinný -h pøepínaè a jeden povinný parametr URI. Spuštìní s pøepínaèem -h zobrazí nápovìdu. Spuštìní s validním URI 
+(viz RFC 3986) parametrem spustí korektnì klienta a zašle požadavek serveru. Klient naformátuje správný požadavek HTTP/1.1 GET s lokací 
+na server a požadovaný soubor. Pøi ètení odpovìdi od serveru se nejprve pøeète hlavièka, která se následnì zpracuje a zjistí se hlavnì 
+HTTP stavový kod a buï délka dat v bytech, anebo že data jsou rozdìlena do chunkù. Pokud byla zadána délka dat, tak se v dalším kroku 
+pøeètou všechna data. V pøípadì chunkù obsahem dat je nejdøíve hexadecimální èíslo poètu znakù a oddìlení novým øádkem, za kterým 
+následuje daný poèet znakù dat.
+
+Testování funkènosti probìhne po zadání "make test", kdy se nejprve server spustí bez využití chunked encoding a postupnì se k nìmu
+pøipojí klient, který požaduje soubor (který na serveru je) a po klient, který poøaduje adresáø (kterému je vrácen kod 403). Poté se 
+server vypne a spustí se znova s jinými pøipínaèi, s podporou chunked encoding. Opìt se postupnì pøipojí dva klienti, kdy první opìt
+požaduje soubor nacházející se na serveru a druhý klient požaduje neexistující soubor. Další test zobrazuje výpis nápovìdy jak na serveru,
+tak na klientovi. Poslední test je na zjištìní nevalidní URI.
+
+Pøíklady spuštìní serveru:
+ipkhttpserver									- port 80 bez podpory chunkù
+ipkhttpserver -p 8080							- port 8080 bez podpory chunkù
+ipkhttpserver -c 1000							- port 80 s velikostí chunku 1000B
+ipkhttpserver -c 500 -t 100						- port 80 s velikostí chunku 500B a odstupem 100ms mezi odesíláním jednotlivých chunkù
+
+Pøíklady spuštìní klienta:
+ipkhttpclient localhost:8080/					- od serveru localhost na portu 8080 je požadován root adresáø
+ipkhttpclient 127.0.0.1/plan.txt				- soubor "plan.txt" klient požaduje od serveru 127.0.0.1
+ipkhttpclient http://www.seznam.cz/index.php 	- soubor "index.php" klient požaduje od serveru www.seznam.cz
